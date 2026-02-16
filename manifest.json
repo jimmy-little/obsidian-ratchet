@@ -7,5 +7,7 @@
 	"author": "Jimmy Little",
 	"authorUrl": "https://github.com/jimmylittle",
 	"isDesktopOnly": false,
-	"styles": ["styles.css"]
+	"styles": [
+		"styles.css"
+	]
 }
