@@ -53,9 +53,10 @@ console.log("Updated manifest.json and versions.json");
 // 3) Build
 run("npm run build");
 
-// 4) Commit and tag
+// 4) Commit and tag (main.js is in .gitignore, so force-add for release)
 const tag = `v${newVersion}`;
-run(`git add package.json manifest.json versions.json main.js`);
+run("git add package.json manifest.json versions.json");
+run("git add -f main.js");
 run(`git commit -m "Release ${tag}"`);
 run(`git tag ${tag}`);
 
@@ -65,10 +66,10 @@ run("git push origin --tags");
 
 // 6) GitHub release
 try {
-	run(`gh release create ${tag} main.js manifest.json --title "${tag}" --notes "Release ${tag}"`);
+	run(`gh release create ${tag} main.js manifest.json styles.css --title "${tag}" --notes "Release ${tag}"`);
 	console.log(`\nRelease ${tag} is live.`);
 } catch (e) {
 	console.error("Creating GitHub release failed. You can run manually:");
-	console.error(`  gh release create ${tag} main.js manifest.json --title "${tag}" --notes "Release ${tag}"`);
+	console.error(`  gh release create ${tag} main.js manifest.json styles.css --title "${tag}" --notes "Release ${tag}"`);
 	process.exit(1);
 }

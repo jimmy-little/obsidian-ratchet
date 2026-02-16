@@ -6,5 +6,6 @@
 	"description": "Obsidian plugin",
 	"author": "Jimmy Little",
 	"authorUrl": "https://github.com/jimmylittle",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"styles": ["styles.css"]
 }
