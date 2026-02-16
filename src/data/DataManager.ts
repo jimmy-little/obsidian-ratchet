@@ -1,7 +1,7 @@
 import type { Vault } from "obsidian";
 import { getMonthKey, isInPeriod, type ResetPeriod } from "../utils/DateUtils";
 import { parseEventLine, eventToLine, type RatchetEvent } from "./EventLog";
-import type { TrackerConfig, RatchetConfigFile } from "./TrackerConfig";
+import type { TrackerConfig, RatchetConfigFile, GoalType } from "./TrackerConfig";
 
 const CONFIG_FILE = "config.json";
 const EVENTS_DIR = "events";
@@ -54,14 +54,22 @@ export class DataManager {
 		await this.vault.adapter.write(this.configPath(), JSON.stringify(config, null, "\t"));
 	}
 
+	private normalizeTracker(t: TrackerConfig): TrackerConfig {
+		return {
+			...t,
+			goalType: (t as TrackerConfig & { goalType?: GoalType }).goalType ?? "at least",
+		};
+	}
+
 	async getAllTrackers(): Promise<TrackerConfig[]> {
 		const config = await this.readConfig();
-		return Object.values(config.trackers);
+		return Object.values(config.trackers).map((t) => this.normalizeTracker(t));
 	}
 
 	async getTracker(id: string): Promise<TrackerConfig | null> {
 		const config = await this.readConfig();
-		return config.trackers[id] ?? null;
+		const t = config.trackers[id] ?? null;
+		return t ? this.normalizeTracker(t) : null;
 	}
 
 	async createTracker(config: TrackerConfig): Promise<void> {
@@ -136,6 +144,124 @@ export class DataManager {
 		return sum;
 	}
 
+	/**
+	 * For "at least" goals: true if the running sum ever reached >= goal this period
+	 * (so toggling +1 then -1 back to 0 still shows as "goal met").
+	 * For "at most": true if current count <= goal (no running-sum check needed).
+	 */
+	async getGoalWasEverMetThisPeriod(trackerId: string): Promise<boolean> {
+		const tracker = await this.getTracker(trackerId);
+		if (!tracker || tracker.goalType === "none") return false;
+		const now = new Date();
+		const period = tracker.resetPeriod;
+		const keys = this.monthKeysToRead(period, now);
+		const events = await this.readEventsForTracker(trackerId, keys);
+		const inPeriod = events.filter((e) =>
+			isInPeriod(e.timestamp, period, now, this.firstDayOfWeek)
+		);
+		if (tracker.goalType === "at most") {
+			const sum = inPeriod.reduce((s, e) => s + e.value, 0);
+			return sum <= tracker.goal;
+		}
+		// at least: running sum ever >= goal?
+		let sum = 0;
+		for (const e of inPeriod) {
+			sum += e.value;
+			if (tracker.goal > 0 && sum >= tracker.goal) return true;
+		}
+		return false;
+	}
+
+	/** Sum of event values for a single calendar day (local date). */
+	async getCountForDay(trackerId: string, date: Date): Promise<number> {
+		const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+		const end = new Date(start);
+		end.setDate(end.getDate() + 1);
+		const events = await this.getHistory(trackerId, start, new Date(end.getTime() - 1));
+		return events.reduce((sum, e) => sum + e.value, 0);
+	}
+
+	/** Whether the goal was met on that calendar day (for heatmap). */
+	async getGoalMetForDay(trackerId: string, date: Date): Promise<boolean> {
+		const status = await this.getGoalStatusForDay(trackerId, date);
+		return status === "met";
+	}
+
+	/**
+	 * Goal status for a single day (for heatmap). Returns "no_data" when there are no events
+	 * that day, so historical days without logging show as grey instead of met.
+	 */
+	async getGoalStatusForDay(
+		trackerId: string,
+		date: Date
+	): Promise<"met" | "not_met" | "no_data"> {
+		const tracker = await this.getTracker(trackerId);
+		if (!tracker || tracker.goalType === "none") return "no_data";
+		const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+		const end = new Date(start);
+		end.setDate(end.getDate() + 1);
+		const events = await this.getHistory(trackerId, start, new Date(end.getTime() - 1));
+		if (events.length === 0) return "no_data";
+		const count = events.reduce((sum, e) => sum + e.value, 0);
+		const met =
+			tracker.goalType === "at least"
+				? (tracker.goal <= 0 || count >= tracker.goal)
+				: count <= tracker.goal;
+		return met ? "met" : "not_met";
+	}
+
+	/** Day key YYYY-MM-DD in local time */
+	private static dateKey(d: Date): string {
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, "0");
+		const day = String(d.getDate()).padStart(2, "0");
+		return `${y}-${m}-${day}`;
+	}
+
+	/**
+	 * Entries per day in range (for edit-history grid). One read for the whole range.
+	 * Sorted by date descending (most recent first).
+	 */
+	async getDayEntries(
+		trackerId: string,
+		startDate: Date,
+		endDate: Date
+	): Promise<{ dateKey: string; date: Date; count: number; eventCount: number; hasDoneMarker: boolean }[]> {
+		const events = await this.getHistory(trackerId, startDate, endDate);
+		const byDay = new Map<
+			string,
+			{ count: number; eventCount: number; hasDoneMarker: boolean }
+		>();
+		for (const e of events) {
+			const d = new Date(e.timestamp);
+			const key = DataManager.dateKey(d);
+			const cur = byDay.get(key) ?? {
+				count: 0,
+				eventCount: 0,
+				hasDoneMarker: false,
+			};
+			cur.count += e.value;
+			cur.eventCount += 1;
+			if (e.value === 0) cur.hasDoneMarker = true;
+			byDay.set(key, cur);
+		}
+		const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+		const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+		const out: { dateKey: string; date: Date; count: number; eventCount: number; hasDoneMarker: boolean }[] = [];
+		for (const d = new Date(end); d.getTime() >= start.getTime(); d.setDate(d.getDate() - 1)) {
+			const key = DataManager.dateKey(d);
+			const row = byDay.get(key);
+			out.push({
+				dateKey: key,
+				date: new Date(d),
+				count: row?.count ?? 0,
+				eventCount: row?.eventCount ?? 0,
+				hasDoneMarker: row?.hasDoneMarker ?? false,
+			});
+		}
+		return out;
+	}
+
 	async getHistory(
 		trackerId: string,
 		startDate: Date,
@@ -163,13 +289,26 @@ export class DataManager {
 	}
 
 	async increment(trackerId: string, value: number, note = ""): Promise<void> {
+		await this.incrementOnDate(trackerId, value, new Date(), note);
+	}
+
+	/** Add an event for a specific calendar day (e.g. from heatmap click). Uses noon local so it unambiguously belongs to that day. */
+	async incrementOnDate(
+		trackerId: string,
+		value: number,
+		date: Date,
+		note = ""
+	): Promise<void> {
 		await this.ensureDataFolder();
-		const now = new Date();
-		const monthKey = getMonthKey(now);
+		const year = date.getFullYear();
+		const month = date.getMonth();
+		const day = date.getDate();
+		const atNoon = new Date(year, month, day, 12, 0, 0, 0);
+		const monthKey = getMonthKey(atNoon);
 		const path = this.eventFilePath(monthKey);
 		const event: RatchetEvent = {
 			id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `e-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-			timestamp: now.toISOString(),
+			timestamp: atNoon.toISOString(),
 			tracker: trackerId,
 			value,
 			note,

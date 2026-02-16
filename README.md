@@ -1,27 +1,29 @@
 # Ratchet
 
-Track habits and count activities in Obsidian. Create trackers, increment from the dashboard or from embedded code blocks, and keep data in your vault as append-only event logs.
+Track habits and goals in Obsidian with event-based counters and embedded widgets.
 
-## Quick start
+## Features
 
-1. **Install**  
-   Copy `main.js`, `styles.css`, `manifest.json`, and `versions.json` into your vault’s `.obsidian/plugins/ratchet/` folder, or use the project’s install script (see [Development](#development)).
+- **Dashboard** – Create and manage trackers (e.g. meditation, reading, no-alcohol). Each tracker has a goal type (at least / at most / none), reset period (daily, weekly, monthly, yearly), and optional goal value.
+- **Embedded widgets** – Use code blocks in notes to show a live counter or a GitHub-style heatmap.
 
-2. **Enable**  
-   In Obsidian: **Settings → Community plugins → Enable “Ratchet”**.
+## Installation
 
-3. **Open the dashboard**  
-   Click the **gear icon** in the left ribbon, or run the command **“Ratchet: Open Dashboard”** from the command palette (`Ctrl/Cmd + P`).
+1. Build: `npm run build`
+2. Copy `main.js` and `manifest.json` into your vault’s `.obsidian/plugins/ratchet/` folder, or use `npm run install:vault` if you have `install.mjs` configured.
+3. Enable **Ratchet** in Settings → Community plugins.
 
-4. **Create a tracker**  
-   In the dashboard, click **+ New**. Set name, icon (emoji), reset period, optional unit and goal, then **Create**.
+## Usage
 
-5. **Increment**  
-   Use the **+1**, **+5**, etc. buttons on each card. Use the **▸** on a card to open details (recent events, delete).
+### Dashboard
 
-## Embedded counter
+- Open via the **Ratchet** ribbon icon or command **“Open Ratchet”**.
+- Create trackers, set goals and reset periods, and use the cards to increment counts.
+- Settings → Ratchet: set data folder (default `.ratchet`), first day of week (Sunday/Monday), and default increment buttons.
 
-In any note, use a `ratchet-counter` code block to show the current count and increment buttons:
+### Code block: `ratchet-counter`
+
+Renders the current count and increment buttons for one tracker.
 
 ````markdown
 ```ratchet-counter
@@ -31,38 +33,57 @@ show-goal: true
 ```
 ````
 
-- **tracker** (required): tracker id (e.g. `coffee`, from the name you gave when creating).
-- **buttons** (optional): list of increment values, e.g. `[1, 5]` or `[5, 10, 15]`. Default uses the plugin’s default increment buttons.
-- **show-goal** (optional): set to `false` to hide “current / goal”. Default is to show if the tracker has a goal.
+| Option      | Description |
+|------------|-------------|
+| `tracker`  | Tracker id (required). |
+| `buttons`  | Increment values, e.g. `[1, 5, 10]`. Defaults to the tracker’s buttons. |
+| `show-goal` | Show goal status (default: true). |
 
-## Settings
+### Code block: `ratchet-summary`
 
-Open **Settings → Community plugins**, then click the **gear icon next to “Ratchet”**.
+Full-width card: on the left, the tracker card (count, +/− buttons, progress bar, goal); on the right, the heatmap. All card actions (increment, etc.) work and refresh the heatmap.
 
-| Setting | Description |
-|--------|-------------|
-| **Data folder** | Vault-relative path for config and event logs. Default: `.ratchet` (hidden folder at vault root). Change and save to move where data is stored; existing data is not moved. |
-| **First day of week** | **Sunday** or **Monday**. Used only for trackers with a “Weekly” reset period. |
-| **Default increment buttons** | Comma-separated numbers (e.g. `1, 5` or `1, 5, 10`) used as the default +1, +5, … buttons for new trackers. |
+````markdown
+```ratchet-summary
+tracker: coffee
+days: 90
+```
+````
 
-## Data storage
+Uses the same options as the heatmap (`tracker`, `days`, `period`).
 
-- **Config**: `.ratchet/config.json` — tracker definitions (name, icon, reset period, goal, etc.).
-- **Events**: `.ratchet/events/YYYY-MM.jsonl` — one JSONL file per month, append-only. Each line is one event (timestamp, tracker id, value, note).
+### Code block: `ratchet-heatmap`
 
-Safe for sync (e.g. Obsidian Sync, iCloud): append-only events and monthly files reduce conflict risk.
+GitHub-style heatmap from today going back a set number of days. Uses the tracker’s color for “goal met” days.
+
+````markdown
+```ratchet-heatmap
+tracker: no-alcohol
+days: 365
+```
+````
+
+| Option   | Description |
+|----------|-------------|
+| `tracker` | Tracker id (required). |
+| `days`  | Number of days to show (e.g. `45`, `90`, `365`). Default: 90. |
+| `period` | Shortcut: `45`, `90`, `365`, `year`, `1y` to set the range. |
+
+- **Hover** – Tooltip shows the date (e.g. “Mon, Feb 15, 2026”).
+- **Click** – For normal trackers, adds +1 for that day. For “at most 0” trackers (e.g. no alcohol), marks the day as done (count stays 0). The heatmap re-renders after a click.
+
+The grid uses your **first day of week** from settings and 7 rows (one per weekday).
+
+## Data
+
+- Config: `.ratchet/config.json` (tracker definitions).
+- Events: `.ratchet/events/YYYY-MM.jsonl` (append-only, one JSON object per line).
 
 ## Development
 
-```bash
-npm install
-npm run dev          # watch build
-npm run build        # production build
-npm run install:vault   # copy built files to a vault (path in install.mjs)
-npm run build:install   # build then copy to vault
-```
-
-Edit `install.mjs` to set your vault path if you use `install:vault` / `build:install`.
+- `npm run dev` – Watch build
+- `npm run build` – Production build
+- `npm run release -- <version>` – Release: bumps version in package.json, manifest, and versions.json; builds; commits and tags; pushes; creates a GitHub release with `main.js` and `manifest.json`. Example: `npm run release -- 0.1.2`. Requires [GitHub CLI](https://cli.github.com/) (`gh`) and a clean git tree.
 
 ## License
 

@@ -49,10 +49,10 @@ export class RatchetSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Default increment buttons")
-			.setDesc("Comma-separated values for new trackers (e.g. 1, 5, 10). Shown as +1, +5, +10 on cards.")
+			.setDesc("Comma-separated values for new trackers (e.g. 1, 5, 10). Default is 1. Each tracker can override in Edit.")
 			.addText((text) =>
 				text
-					.setPlaceholder("1, 5")
+					.setPlaceholder("1")
 					.setValue(this.plugin.settings.defaultIncrementButtons.join(", "))
 					.onChange(async (value) => {
 						const parsed = value
@@ -60,7 +60,7 @@ export class RatchetSettingTab extends PluginSettingTab {
 							.map((s) => parseInt(s.trim(), 10))
 							.filter((n) => !isNaN(n) && n > 0);
 						this.plugin.settings.defaultIncrementButtons =
-							parsed.length > 0 ? parsed : [1, 5];
+							parsed.length > 0 ? parsed : [1];
 						await this.plugin.saveSettings();
 					})
 			);

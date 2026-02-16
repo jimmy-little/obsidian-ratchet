@@ -7,5 +7,5 @@ export interface RatchetSettings {
 export const DEFAULT_SETTINGS: RatchetSettings = {
 	dataFolder: ".ratchet",
 	firstDayOfWeek: 0,
-	defaultIncrementButtons: [1, 5],
+	defaultIncrementButtons: [1],
 };
