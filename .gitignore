@@ -1,0 +1,13 @@
+# Dependencies and build
+node_modules/
+main.js
+main.js.map
+dist/
+
+# Environment and local
+*.local
+.env
+*.log
+
+# OS
+.DS_Store

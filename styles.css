@@ -1,0 +1,246 @@
+/* Ratchet - MVP styles */
+
+.ratchet-settings-desc {
+	color: var(--text-muted);
+	font-size: 13px;
+	margin-bottom: 1.5em;
+	line-height: 1.5;
+}
+
+.ratchet-modal {
+	max-width: 800px;
+	min-height: 400px;
+}
+
+.ratchet-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ratchet-modal-header h2 {
+	margin: 0;
+}
+
+.ratchet-modal-content {
+	padding: 16px;
+	overflow-y: auto;
+	min-height: 200px;
+}
+
+.ratchet-empty {
+	color: var(--text-muted);
+	margin: 24px 0;
+}
+
+.ratchet-cards-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 16px;
+}
+
+.ratchet-card {
+	background: var(--background-primary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 16px;
+	text-align: center;
+	transition: transform 0.2s;
+}
+
+.ratchet-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ratchet-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin-bottom: 8px;
+	position: relative;
+}
+
+.ratchet-card-icon {
+	font-size: 1.5em;
+}
+
+.ratchet-card-name {
+	font-weight: 600;
+	font-size: 14px;
+}
+
+.ratchet-card-disclosure {
+	cursor: pointer;
+	opacity: 0.6;
+	font-size: 12px;
+	margin-left: 4px;
+	padding: 2px 4px;
+	border-radius: 4px;
+}
+
+.ratchet-card-disclosure:hover {
+	opacity: 1;
+	background: var(--background-modifier-hover);
+}
+
+.ratchet-card-count {
+	font-size: 2em;
+	font-weight: bold;
+	margin: 8px 0;
+}
+
+.ratchet-card-value,
+.ratchet-card-unit {
+	color: var(--text-normal);
+}
+
+.ratchet-card-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+	margin: 12px 0;
+}
+
+.ratchet-increment-btn {
+	padding: 6px 14px;
+	border-radius: 4px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.ratchet-increment-btn:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.ratchet-progress-wrap {
+	margin-top: 12px;
+	text-align: center;
+}
+
+.ratchet-progress-bar {
+	width: 100%;
+	height: 6px;
+	background: var(--background-modifier-border);
+	border-radius: 3px;
+	overflow: hidden;
+	margin-bottom: 4px;
+}
+
+.ratchet-progress-fill {
+	height: 100%;
+	background: var(--interactive-accent);
+	transition: width 0.3s ease;
+}
+
+.ratchet-progress-label {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+/* Detail modal */
+.ratchet-detail-modal h2 {
+	margin-top: 0;
+}
+
+.ratchet-detail-actions {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.ratchet-detail-events {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.ratchet-detail-event-row {
+	font-size: 13px;
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+}
+
+.ratchet-detail-note {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* Create tracker modal */
+.ratchet-modal-buttons {
+	display: flex;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.ratchet-modal-buttons .setting-item {
+	border: none;
+}
+
+/* Embedded counter widget */
+.ratchet-counter-widget {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 8px 12px;
+	background: var(--background-primary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.ratchet-counter-left {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 4px;
+}
+
+.ratchet-counter-icon {
+	font-size: 1.2em;
+}
+
+.ratchet-counter-value {
+	font-weight: 600;
+	font-size: 1.1em;
+}
+
+.ratchet-counter-goal {
+	color: var(--text-muted);
+	font-size: 0.95em;
+}
+
+.ratchet-counter-buttons {
+	display: inline-flex;
+	gap: 6px;
+}
+
+.ratchet-counter-buttons button {
+	padding: 4px 10px;
+	font-size: 12px;
+	border-radius: 4px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	cursor: pointer;
+}
+
+.ratchet-counter-buttons button:hover {
+	background: var(--interactive-accent-hover);
+}
+
+@media (max-width: 600px) {
+	.ratchet-cards-grid {
+		grid-template-columns: 1fr;
+	}
+}

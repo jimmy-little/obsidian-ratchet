@@ -1,0 +1,10 @@
+{
+	"id": "ratchet",
+	"name": "Ratchet",
+	"version": "0.1.0",
+	"minAppVersion": "0.15.0",
+	"description": "Obsidian plugin",
+	"author": "Jimmy Little",
+	"authorUrl": "https://github.com/jimmylittle",
+	"isDesktopOnly": false
+}
